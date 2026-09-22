@@ -35,6 +35,141 @@ export type Body_login_login_access_token = {
 };
 
 /**
+ * DeviceCreate
+ */
+export type DeviceCreate = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * DeviceHandshakePublic
+ */
+export type DeviceHandshakePublic = {
+    device: DevicePublic;
+    /**
+     * Server Time
+     */
+    server_time: string;
+};
+
+/**
+ * DeviceNotePublic
+ */
+export type DeviceNotePublic = {
+    /**
+     * Delivery Id
+     */
+    delivery_id: string;
+    /**
+     * Note Id
+     */
+    note_id: string;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Min Retention Seconds
+     */
+    min_retention_seconds: number;
+    /**
+     * Max Retention Seconds
+     */
+    max_retention_seconds?: number | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Queue Remaining
+     */
+    queue_remaining: number;
+    /**
+     * Server Time
+     */
+    server_time: string;
+};
+
+/**
+ * DevicePublic
+ */
+export type DevicePublic = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Owner Id
+     */
+    owner_id: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
+    /**
+     * Last Seen At
+     */
+    last_seen_at?: string | null;
+};
+
+/**
+ * DeviceRegistrationInfo
+ */
+export type DeviceRegistrationInfo = {
+    /**
+     * Api Url
+     */
+    api_url: string;
+    /**
+     * Device Id
+     */
+    device_id: string;
+    /**
+     * Token
+     */
+    token: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * DeviceUpdate
+ */
+export type DeviceUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+};
+
+/**
+ * DevicesPublic
+ */
+export type DevicesPublic = {
+    /**
+     * Data
+     */
+    data: Array<DevicePublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
  * HTTPValidationError
  */
 export type HTTPValidationError = {
@@ -134,6 +269,172 @@ export type NewPassword = {
      * New Password
      */
     new_password: string;
+};
+
+/**
+ * NoteCreate
+ */
+export type NoteCreate = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Recipient Id
+     */
+    recipient_id: string;
+    /**
+     * Min Retention
+     */
+    min_retention?: string;
+    /**
+     * Max Retention
+     */
+    max_retention?: string | null;
+};
+
+/**
+ * NoteDeliveryPublic
+ */
+export type NoteDeliveryPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Device Id
+     */
+    device_id: string;
+    /**
+     * Device Name
+     */
+    device_name: string;
+    /**
+     * Received
+     */
+    received: boolean;
+    /**
+     * Received At
+     */
+    received_at?: string | null;
+};
+
+/**
+ * NoteDetailPublic
+ */
+export type NoteDetailPublic = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Sender Id
+     */
+    sender_id: string;
+    /**
+     * Recipient Id
+     */
+    recipient_id: string;
+    /**
+     * Recipient Name
+     */
+    recipient_name?: string | null;
+    /**
+     * Sender Name
+     */
+    sender_name?: string | null;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
+    /**
+     * Min Retention Seconds
+     */
+    min_retention_seconds: number;
+    /**
+     * Max Retention Seconds
+     */
+    max_retention_seconds?: number | null;
+    /**
+     * Delivered Count
+     */
+    delivered_count?: number;
+    /**
+     * Received Count
+     */
+    received_count?: number;
+    /**
+     * Deliveries
+     */
+    deliveries?: Array<NoteDeliveryPublic>;
+};
+
+/**
+ * NotePublic
+ */
+export type NotePublic = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Sender Id
+     */
+    sender_id: string;
+    /**
+     * Recipient Id
+     */
+    recipient_id: string;
+    /**
+     * Recipient Name
+     */
+    recipient_name?: string | null;
+    /**
+     * Sender Name
+     */
+    sender_name?: string | null;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
+    /**
+     * Min Retention Seconds
+     */
+    min_retention_seconds: number;
+    /**
+     * Max Retention Seconds
+     */
+    max_retention_seconds?: number | null;
+    /**
+     * Delivered Count
+     */
+    delivered_count?: number;
+    /**
+     * Received Count
+     */
+    received_count?: number;
+};
+
+/**
+ * NotesPublic
+ */
+export type NotesPublic = {
+    /**
+     * Data
+     */
+    data: Array<NotePublic>;
+    /**
+     * Count
+     */
+    count: number;
 };
 
 /**
@@ -237,6 +538,10 @@ export type UserPublic = {
      */
     id: string;
     /**
+     * Partner Id
+     */
+    partner_id?: string | null;
+    /**
      * Created At
      */
     created_at?: string | null;
@@ -258,6 +563,24 @@ export type UserRegister = {
      * Full Name
      */
     full_name?: string | null;
+};
+
+/**
+ * UserSearchResult
+ */
+export type UserSearchResult = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Full Name
+     */
+    full_name?: string | null;
+    /**
+     * Email
+     */
+    email: string;
 };
 
 /**
@@ -298,6 +621,10 @@ export type UserUpdateMe = {
      * Email
      */
     email?: string | null;
+    /**
+     * Partner Id
+     */
+    partner_id?: string | null;
 };
 
 /**
@@ -312,6 +639,16 @@ export type UsersPublic = {
      * Count
      */
     count: number;
+};
+
+/**
+ * UsersSearchPublic
+ */
+export type UsersSearchPublic = {
+    /**
+     * Data
+     */
+    data: Array<UserSearchResult>;
 };
 
 /**
@@ -634,6 +971,36 @@ export type usersRegisterUserResponses = {
 
 export type usersRegisterUserResponse = usersRegisterUserResponses[keyof usersRegisterUserResponses];
 
+export type usersSearchUsersData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Q
+         */
+        q: string;
+    };
+    url: '/api/v1/users/search';
+};
+
+export type usersSearchUsersErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type usersSearchUsersError = usersSearchUsersErrors[keyof usersSearchUsersErrors];
+
+export type usersSearchUsersResponses = {
+    /**
+     * Successful Response
+     */
+    200: UsersSearchPublic;
+};
+
+export type usersSearchUsersResponse = usersSearchUsersResponses[keyof usersSearchUsersResponses];
+
 export type usersDeleteUserData = {
     body?: never;
     path: {
@@ -920,6 +1287,312 @@ export type itemsUpdateItemResponses = {
 };
 
 export type itemsUpdateItemResponse = itemsUpdateItemResponses[keyof itemsUpdateItemResponses];
+
+export type devicesReadDevicesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/devices/';
+};
+
+export type devicesReadDevicesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type devicesReadDevicesError = devicesReadDevicesErrors[keyof devicesReadDevicesErrors];
+
+export type devicesReadDevicesResponses = {
+    /**
+     * Successful Response
+     */
+    200: DevicesPublic;
+};
+
+export type devicesReadDevicesResponse = devicesReadDevicesResponses[keyof devicesReadDevicesResponses];
+
+export type devicesCreateDeviceData = {
+    body: DeviceCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/devices/';
+};
+
+export type devicesCreateDeviceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type devicesCreateDeviceError = devicesCreateDeviceErrors[keyof devicesCreateDeviceErrors];
+
+export type devicesCreateDeviceResponses = {
+    /**
+     * Successful Response
+     */
+    200: DeviceRegistrationInfo;
+};
+
+export type devicesCreateDeviceResponse = devicesCreateDeviceResponses[keyof devicesCreateDeviceResponses];
+
+export type devicesDeleteDeviceData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/devices/{id}';
+};
+
+export type devicesDeleteDeviceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type devicesDeleteDeviceError = devicesDeleteDeviceErrors[keyof devicesDeleteDeviceErrors];
+
+export type devicesDeleteDeviceResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type devicesDeleteDeviceResponse = devicesDeleteDeviceResponses[keyof devicesDeleteDeviceResponses];
+
+export type devicesUpdateDeviceData = {
+    body: DeviceUpdate;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/devices/{id}';
+};
+
+export type devicesUpdateDeviceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type devicesUpdateDeviceError = devicesUpdateDeviceErrors[keyof devicesUpdateDeviceErrors];
+
+export type devicesUpdateDeviceResponses = {
+    /**
+     * Successful Response
+     */
+    200: DevicePublic;
+};
+
+export type devicesUpdateDeviceResponse = devicesUpdateDeviceResponses[keyof devicesUpdateDeviceResponses];
+
+export type deviceRegisterDeviceData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/device/register';
+};
+
+export type deviceRegisterDeviceResponses = {
+    /**
+     * Successful Response
+     */
+    200: DeviceHandshakePublic;
+};
+
+export type deviceRegisterDeviceResponse = deviceRegisterDeviceResponses[keyof deviceRegisterDeviceResponses];
+
+export type deviceGetNextNoteData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/device/notes/next';
+};
+
+export type deviceGetNextNoteResponses = {
+    /**
+     * Response Device-Get Next Note
+     *
+     * Successful Response
+     */
+    200: DeviceNotePublic | null;
+};
+
+export type deviceGetNextNoteResponse = deviceGetNextNoteResponses[keyof deviceGetNextNoteResponses];
+
+export type deviceMarkNoteReceivedData = {
+    body?: never;
+    path: {
+        /**
+         * Delivery Id
+         */
+        delivery_id: string;
+    };
+    query?: never;
+    url: '/api/v1/device/notes/{delivery_id}/received';
+};
+
+export type deviceMarkNoteReceivedErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type deviceMarkNoteReceivedError = deviceMarkNoteReceivedErrors[keyof deviceMarkNoteReceivedErrors];
+
+export type deviceMarkNoteReceivedResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type deviceMarkNoteReceivedResponse = deviceMarkNoteReceivedResponses[keyof deviceMarkNoteReceivedResponses];
+
+export type notesReadNotesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/notes/';
+};
+
+export type notesReadNotesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type notesReadNotesError = notesReadNotesErrors[keyof notesReadNotesErrors];
+
+export type notesReadNotesResponses = {
+    /**
+     * Successful Response
+     */
+    200: NotesPublic;
+};
+
+export type notesReadNotesResponse = notesReadNotesResponses[keyof notesReadNotesResponses];
+
+export type notesCreateNoteData = {
+    body: NoteCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notes/';
+};
+
+export type notesCreateNoteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type notesCreateNoteError = notesCreateNoteErrors[keyof notesCreateNoteErrors];
+
+export type notesCreateNoteResponses = {
+    /**
+     * Successful Response
+     */
+    200: NotePublic;
+};
+
+export type notesCreateNoteResponse = notesCreateNoteResponses[keyof notesCreateNoteResponses];
+
+export type notesReadInboxData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/notes/inbox';
+};
+
+export type notesReadInboxErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type notesReadInboxError = notesReadInboxErrors[keyof notesReadInboxErrors];
+
+export type notesReadInboxResponses = {
+    /**
+     * Successful Response
+     */
+    200: NotesPublic;
+};
+
+export type notesReadInboxResponse = notesReadInboxResponses[keyof notesReadInboxResponses];
+
+export type notesReadNoteData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notes/{id}';
+};
+
+export type notesReadNoteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type notesReadNoteError = notesReadNoteErrors[keyof notesReadNoteErrors];
+
+export type notesReadNoteResponses = {
+    /**
+     * Successful Response
+     */
+    200: NoteDetailPublic;
+};
+
+export type notesReadNoteResponse = notesReadNoteResponses[keyof notesReadNoteResponses];
 
 export type privateCreateUserData = {
     body: PrivateUserCreate;

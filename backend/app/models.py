@@ -1,9 +1,13 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from pydantic import EmailStr
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, Interval
 from sqlmodel import Field, Relationship, SQLModel
+
+# Default retention: a note stays displayed at least this long before the device
+# is allowed to rotate to the next queued note.
+DEFAULT_MIN_RETENTION = timedelta(hours=1)
 
 
 def get_datetime_utc() -> datetime:
@@ -41,6 +45,7 @@ class UserUpdate(SQLModel):
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
+    partner_id: uuid.UUID | None = None
 
 
 class UpdatePassword(SQLModel):
@@ -52,16 +57,21 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
+    partner_id: uuid.UUID | None = Field(
+        default=None, foreign_key="user.id", nullable=True
+    )
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     items: list[Item] = Relationship(back_populates="owner", cascade_delete=True)
+    devices: list["Device"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
+    partner_id: uuid.UUID | None = None
     created_at: datetime | None = None
 
 
@@ -110,6 +120,194 @@ class ItemPublic(ItemBase):
 class ItemsPublic(SQLModel):
     data: list[ItemPublic]
     count: int
+
+
+# Device statuses
+DEVICE_STATUS_PENDING = "pending"
+DEVICE_STATUS_ACTIVE = "active"
+
+
+# Shared properties
+class DeviceBase(SQLModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+# Properties to receive on device creation
+class DeviceCreate(DeviceBase):
+    pass
+
+
+# Properties to receive on device update
+class DeviceUpdate(SQLModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+# Database model
+class Device(DeviceBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    # sha256 hex digest of the device bearer token (the raw token is never stored)
+    token_hash: str = Field(unique=True, index=True, max_length=64)
+    status: str = Field(default=DEVICE_STATUS_PENDING, max_length=20)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    last_seen_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    owner: User | None = Relationship(back_populates="devices")
+    deliveries: list["NoteDelivery"] = Relationship(
+        back_populates="device", cascade_delete=True
+    )
+
+
+# Properties to return via API
+class DevicePublic(DeviceBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    status: str
+    created_at: datetime | None = None
+    last_seen_at: datetime | None = None
+
+
+class DevicesPublic(SQLModel):
+    data: list[DevicePublic]
+    count: int
+
+
+# Returned once, on device creation: the payload encoded into the QR code so the
+# gadget can register itself. The raw token is only ever exposed here.
+class DeviceRegistrationInfo(SQLModel):
+    api_url: str
+    device_id: uuid.UUID
+    token: str
+    name: str
+
+
+# Shared properties
+class NoteBase(SQLModel):
+    text: str = Field(min_length=1, max_length=1000)
+
+
+# Properties to receive on note creation
+class NoteCreate(NoteBase):
+    recipient_id: uuid.UUID
+    min_retention: timedelta = DEFAULT_MIN_RETENTION
+    # None means the note never auto-expires (infinite max retention)
+    max_retention: timedelta | None = None
+
+
+# Database model
+class Note(NoteBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    sender_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    recipient_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    min_retention: timedelta = Field(
+        default=DEFAULT_MIN_RETENTION,
+        sa_type=Interval,  # type: ignore
+    )
+    max_retention: timedelta | None = Field(
+        default=None,
+        sa_type=Interval,  # type: ignore
+    )
+    deliveries: list["NoteDelivery"] = Relationship(
+        back_populates="note", cascade_delete=True
+    )
+
+
+# Per-device fan-out of a note. One row per recipient device.
+class NoteDelivery(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    note_id: uuid.UUID = Field(
+        foreign_key="note.id", nullable=False, ondelete="CASCADE", index=True
+    )
+    device_id: uuid.UUID = Field(
+        foreign_key="device.id", nullable=False, ondelete="CASCADE", index=True
+    )
+    received: bool = Field(default=False, index=True)
+    received_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    note: Note | None = Relationship(back_populates="deliveries")
+    device: Device | None = Relationship(back_populates="deliveries")
+
+
+# Delivery status of a note on a single device (for the sender's "who received it" view)
+class NoteDeliveryPublic(SQLModel):
+    id: uuid.UUID
+    device_id: uuid.UUID
+    device_name: str
+    received: bool
+    received_at: datetime | None = None
+
+
+# Properties to return via API for a sent/received note
+class NotePublic(NoteBase):
+    id: uuid.UUID
+    sender_id: uuid.UUID
+    recipient_id: uuid.UUID
+    recipient_name: str | None = None
+    sender_name: str | None = None
+    created_at: datetime | None = None
+    min_retention_seconds: int
+    max_retention_seconds: int | None = None
+    delivered_count: int = 0
+    received_count: int = 0
+
+
+class NotesPublic(SQLModel):
+    data: list[NotePublic]
+    count: int
+
+
+class NoteDetailPublic(NotePublic):
+    deliveries: list[NoteDeliveryPublic] = []
+
+
+# The device poll payload: the next unreceived note plus queue/clock metadata
+class DeviceNotePublic(SQLModel):
+    delivery_id: uuid.UUID
+    note_id: uuid.UUID
+    text: str
+    min_retention_seconds: int
+    max_retention_seconds: int | None = None
+    created_at: datetime
+    queue_remaining: int
+    server_time: datetime
+
+
+# Device handshake / registration response
+class DeviceHandshakePublic(SQLModel):
+    device: DevicePublic
+    server_time: datetime
+
+
+# A single user match for the recipient picker
+class UserSearchResult(SQLModel):
+    id: uuid.UUID
+    full_name: str | None = None
+    email: EmailStr
+
+
+class UsersSearchPublic(SQLModel):
+    data: list[UserSearchResult]
 
 
 # Generic message

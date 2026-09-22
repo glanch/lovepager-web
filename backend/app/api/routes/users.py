@@ -21,6 +21,8 @@ from app.models import (
     UserPublic,
     UserRegister,
     UsersPublic,
+    UserSearchResult,
+    UsersSearchPublic,
     UserUpdate,
     UserUpdateMe,
 )
@@ -93,6 +95,10 @@ def update_user_me(
                 status_code=409, detail="User with this email already exists"
             )
     user_data = user_in.model_dump(exclude_unset=True)
+    if "partner_id" in user_data and user_data["partner_id"] is not None:
+        partner = session.get(User, user_data["partner_id"])
+        if not partner or not partner.is_active:
+            raise HTTPException(status_code=404, detail="Partner user not found")
     current_user.sqlmodel_update(user_data)
     session.add(current_user)
     session.commit()
@@ -157,6 +163,24 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     user_create = UserCreate.model_validate(user_in)
     user = crud.create_user(session=session, user_create=user_create)
     return user
+
+
+@router.get("/search", response_model=UsersSearchPublic)
+def search_users(
+    session: SessionDep, current_user: CurrentUser, q: str
+) -> Any:
+    """
+    Search users by display name or email, to pick a note recipient.
+
+    Results include the caller, since sending notes to your own devices is allowed.
+    """
+    query = q.strip()
+    if not query:
+        return UsersSearchPublic(data=[])
+    users = crud.search_users(session=session, query=query)
+    return UsersSearchPublic(
+        data=[UserSearchResult.model_validate(u) for u in users]
+    )
 
 
 @router.get("/{user_id}", response_model=UserPublic)

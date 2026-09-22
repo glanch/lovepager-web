@@ -2,7 +2,7 @@
 
 import { type Client, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
+import type { deviceGetNextNoteData, deviceGetNextNoteResponses, deviceMarkNoteReceivedData, deviceMarkNoteReceivedErrors, deviceMarkNoteReceivedResponses, deviceRegisterDeviceData, deviceRegisterDeviceResponses, devicesCreateDeviceData, devicesCreateDeviceErrors, devicesCreateDeviceResponses, devicesDeleteDeviceData, devicesDeleteDeviceErrors, devicesDeleteDeviceResponses, devicesReadDevicesData, devicesReadDevicesErrors, devicesReadDevicesResponses, devicesUpdateDeviceData, devicesUpdateDeviceErrors, devicesUpdateDeviceResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, notesCreateNoteData, notesCreateNoteErrors, notesCreateNoteResponses, notesReadInboxData, notesReadInboxErrors, notesReadInboxResponses, notesReadNoteData, notesReadNoteErrors, notesReadNoteResponses, notesReadNotesData, notesReadNotesErrors, notesReadNotesResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersSearchUsersData, usersSearchUsersErrors, usersSearchUsersResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -211,6 +211,20 @@ export class UsersService {
     }
     
     /**
+     * Search Users
+     *
+     * Search users by display name or email, to pick a note recipient.
+     */
+    public static searchUsers<ThrowOnError extends boolean = true>(options: Options<usersSearchUsersData, ThrowOnError>) {
+        return (options.client ?? client).get<usersSearchUsersResponses, usersSearchUsersErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/users/search',
+            ...options
+        });
+    }
+    
+    /**
      * Delete User
      *
      * Delete a user.
@@ -360,6 +374,182 @@ export class ItemsService {
                 'Content-Type': 'application/json',
                 ...options.headers
             }
+        });
+    }
+}
+
+export class DevicesService {
+    /**
+     * Read Devices
+     *
+     * Retrieve the current user's devices.
+     */
+    public static readDevices<ThrowOnError extends boolean = true>(options?: Options<devicesReadDevicesData, ThrowOnError>) {
+        return (options?.client ?? client).get<devicesReadDevicesResponses, devicesReadDevicesErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/devices/',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Device
+     *
+     * Register a new device. Returns the one-time QR payload (including the raw
+     * token) the gadget uses to complete registration. The token is not retrievable
+     * afterwards.
+     */
+    public static createDevice<ThrowOnError extends boolean = true>(options: Options<devicesCreateDeviceData, ThrowOnError>) {
+        return (options.client ?? client).post<devicesCreateDeviceResponses, devicesCreateDeviceErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/devices/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Delete Device
+     *
+     * Delete a device.
+     */
+    public static deleteDevice<ThrowOnError extends boolean = true>(options: Options<devicesDeleteDeviceData, ThrowOnError>) {
+        return (options.client ?? client).delete<devicesDeleteDeviceResponses, devicesDeleteDeviceErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/devices/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update Device
+     *
+     * Rename a device.
+     */
+    public static updateDevice<ThrowOnError extends boolean = true>(options: Options<devicesUpdateDeviceData, ThrowOnError>) {
+        return (options.client ?? client).patch<devicesUpdateDeviceResponses, devicesUpdateDeviceErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/devices/{id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+}
+
+export class DeviceService {
+    /**
+     * Register Device
+     *
+     * Handshake called by the gadget after scanning its QR code. Marks the device
+     * active and returns the current server time for clock sync.
+     */
+    public static registerDevice<ThrowOnError extends boolean = true>(options?: Options<deviceRegisterDeviceData, ThrowOnError>) {
+        return (options?.client ?? client).post<deviceRegisterDeviceResponses, unknown, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/device/register',
+            ...options
+        });
+    }
+    
+    /**
+     * Get Next Note
+     *
+     * Return the oldest unreceived note for this device, or null if the queue is
+     * empty. Stamps the device as recently seen.
+     */
+    public static getNextNote<ThrowOnError extends boolean = true>(options?: Options<deviceGetNextNoteData, ThrowOnError>) {
+        return (options?.client ?? client).get<deviceGetNextNoteResponses, unknown, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/device/notes/next',
+            ...options
+        });
+    }
+    
+    /**
+     * Mark Note Received
+     *
+     * Mark a delivered note as received (displayed) on this device.
+     */
+    public static markNoteReceived<ThrowOnError extends boolean = true>(options: Options<deviceMarkNoteReceivedData, ThrowOnError>) {
+        return (options.client ?? client).post<deviceMarkNoteReceivedResponses, deviceMarkNoteReceivedErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/device/notes/{delivery_id}/received',
+            ...options
+        });
+    }
+}
+
+export class NotesService {
+    /**
+     * Read Notes
+     *
+     * Retrieve notes the current user has sent.
+     */
+    public static readNotes<ThrowOnError extends boolean = true>(options?: Options<notesReadNotesData, ThrowOnError>) {
+        return (options?.client ?? client).get<notesReadNotesResponses, notesReadNotesErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/notes/',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Note
+     *
+     * Send a note to another user. It is fanned out to the recipient's active devices.
+     */
+    public static createNote<ThrowOnError extends boolean = true>(options: Options<notesCreateNoteData, ThrowOnError>) {
+        return (options.client ?? client).post<notesCreateNoteResponses, notesCreateNoteErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/notes/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Read Inbox
+     *
+     * Retrieve notes addressed to the current user.
+     */
+    public static readInbox<ThrowOnError extends boolean = true>(options?: Options<notesReadInboxData, ThrowOnError>) {
+        return (options?.client ?? client).get<notesReadInboxResponses, notesReadInboxErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/notes/inbox',
+            ...options
+        });
+    }
+    
+    /**
+     * Read Note
+     *
+     * Get a note by ID, including its per-device delivery status.
+     */
+    public static readNote<ThrowOnError extends boolean = true>(options: Options<notesReadNoteData, ThrowOnError>) {
+        return (options.client ?? client).get<notesReadNoteResponses, notesReadNoteErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/notes/{id}',
+            ...options
         });
     }
 }

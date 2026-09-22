@@ -1,11 +1,7 @@
 import { Link } from "@tanstack/react-router"
+import { Heart } from "lucide-react"
 
-import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
-import icon from "/assets/images/fastapi-icon.svg"
-import iconLight from "/assets/images/fastapi-icon-light.svg"
-import logo from "/assets/images/fastapi-logo.svg"
-import logoLight from "/assets/images/fastapi-logo-light.svg"
 
 interface LogoProps {
   variant?: "full" | "icon" | "responsive"
@@ -13,48 +9,30 @@ interface LogoProps {
   asLink?: boolean
 }
 
-export function Logo({
-  variant = "full",
-  className,
-  asLink = true,
-}: LogoProps) {
-  const { resolvedTheme } = useTheme()
-  const isDark = resolvedTheme === "dark"
+export function Logo({ variant = "full", className, asLink = true }: LogoProps) {
+  const icon = (
+    <Heart className={cn("h-5 w-5 text-pink-500 fill-pink-500", className)} />
+  )
 
-  const fullLogo = isDark ? logoLight : logo
-  const iconLogo = isDark ? iconLight : icon
+  const full = (
+    <div className={cn("flex items-center gap-2", className)}>
+      <Heart className="h-5 w-5 text-pink-500 fill-pink-500 shrink-0" />
+      <span className="font-semibold tracking-tight">LovePager</span>
+    </div>
+  )
 
   const content =
     variant === "responsive" ? (
       <>
-        <img
-          src={fullLogo}
-          alt="FastAPI"
-          className={cn(
-            "h-6 w-auto group-data-[collapsible=icon]:hidden",
-            className,
-          )}
-        />
-        <img
-          src={iconLogo}
-          alt="FastAPI"
-          className={cn(
-            "size-5 hidden group-data-[collapsible=icon]:block",
-            className,
-          )}
-        />
+        <div className="group-data-[collapsible=icon]:hidden">{full}</div>
+        <div className="hidden group-data-[collapsible=icon]:block">{icon}</div>
       </>
+    ) : variant === "icon" ? (
+      icon
     ) : (
-      <img
-        src={variant === "full" ? fullLogo : iconLogo}
-        alt="FastAPI"
-        className={cn(variant === "full" ? "h-6 w-auto" : "size-5", className)}
-      />
+      full
     )
 
-  if (!asLink) {
-    return content
-  }
-
+  if (!asLink) return content
   return <Link to="/">{content}</Link>
 }

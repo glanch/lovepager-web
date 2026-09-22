@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:5173"
     FASTAPI_ENV: Literal["development"] | None = None
 
+    # Public base URL of this API, embedded in the device-registration QR code so
+    # the gadget knows where to reach the backend. Set this to the deployed host.
+    DEVICE_API_URL: str = "http://localhost:8000"
+
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
     DATABASE_URL: PostgresDsn

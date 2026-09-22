@@ -16,7 +16,9 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutDevicesRouteImport } from './routes/_layout/devices'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
+import { Route as LayoutNotesRouteImport } from './routes/_layout/notes'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 
 const LayoutRoute = LayoutRouteImport.update({
@@ -53,9 +55,19 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutDevicesRoute = LayoutDevicesRouteImport.update({
+  id: '/devices',
+  path: '/devices',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutItemsRoute = LayoutItemsRouteImport.update({
   id: '/items',
   path: '/items',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutNotesRoute = LayoutNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
@@ -71,7 +83,9 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/devices': typeof LayoutDevicesRoute
   '/items': typeof LayoutItemsRoute
+  '/notes': typeof LayoutNotesRoute
   '/settings': typeof LayoutSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -80,7 +94,9 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/devices': typeof LayoutDevicesRoute
   '/items': typeof LayoutItemsRoute
+  '/notes': typeof LayoutNotesRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
 }
@@ -92,7 +108,9 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/devices': typeof LayoutDevicesRoute
   '/_layout/items': typeof LayoutItemsRoute
+  '/_layout/notes': typeof LayoutNotesRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
 }
@@ -105,7 +123,9 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/devices'
     | '/items'
+    | '/notes'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -114,7 +134,9 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/devices'
     | '/items'
+    | '/notes'
     | '/settings'
     | '/'
   id:
@@ -125,7 +147,9 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/devices'
     | '/_layout/items'
+    | '/_layout/notes'
     | '/_layout/settings'
     | '/_layout/'
   fileRoutesById: FileRoutesById
@@ -189,11 +213,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/devices': {
+      id: '/_layout/devices'
+      path: '/devices'
+      fullPath: '/devices'
+      preLoaderRoute: typeof LayoutDevicesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/items': {
       id: '/_layout/items'
       path: '/items'
       fullPath: '/items'
       preLoaderRoute: typeof LayoutItemsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/notes': {
+      id: '/_layout/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof LayoutNotesRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/settings': {
@@ -208,14 +246,18 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutDevicesRoute: typeof LayoutDevicesRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
+  LayoutNotesRoute: typeof LayoutNotesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutDevicesRoute: LayoutDevicesRoute,
   LayoutItemsRoute: LayoutItemsRoute,
+  LayoutNotesRoute: LayoutNotesRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }

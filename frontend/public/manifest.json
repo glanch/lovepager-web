@@ -1,0 +1,18 @@
+{
+  "name": "LovePager",
+  "short_name": "LovePager",
+  "description": "Send love notes to your partner's pager",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ec4899",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/assets/images/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
