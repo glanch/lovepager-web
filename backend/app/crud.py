@@ -9,18 +9,24 @@ from app.core.security import (
     hash_device_token,
     verify_password,
 )
+from datetime import timedelta
+
 from app.models import (
     DEVICE_STATUS_ACTIVE,
+    DEFAULT_MIN_RETENTION,
     Device,
     Item,
     ItemCreate,
     Note,
     NoteCreate,
     NoteDelivery,
+    NOTE_MEDIA_AUDIO,
     User,
     UserCreate,
     UserUpdate,
 )
+
+DEFAULT_AUDIO_CAPTION = "🎤 Voice note"
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -121,6 +127,51 @@ def create_note(
     devices = session.exec(
         select(Device).where(
             Device.owner_id == note_in.recipient_id,
+            Device.status == DEVICE_STATUS_ACTIVE,
+        )
+    ).all()
+    for device in devices:
+        session.add(NoteDelivery(note_id=note.id, device_id=device.id))
+
+    session.commit()
+    session.refresh(note)
+    return note
+
+
+def create_audio_note(
+    *,
+    session: Session,
+    sender_id: uuid.UUID,
+    recipient_id: uuid.UUID,
+    audio_data: bytes,
+    audio_mime: str,
+    audio_duration_ms: int,
+    caption: str | None = None,
+    min_retention: timedelta = DEFAULT_MIN_RETENTION,
+    max_retention: timedelta | None = None,
+) -> Note:
+    """Store an audio note and fan it out to each active device of the recipient.
+
+    `caption` (or a generic fallback) is stored as the note's `text` so that
+    firmware which predates audio support still shows something legible.
+    """
+    note = Note(
+        text=(caption or DEFAULT_AUDIO_CAPTION).strip() or DEFAULT_AUDIO_CAPTION,
+        media_type=NOTE_MEDIA_AUDIO,
+        sender_id=sender_id,
+        recipient_id=recipient_id,
+        min_retention=min_retention,
+        max_retention=max_retention,
+        audio_data=audio_data,
+        audio_mime=audio_mime,
+        audio_duration_ms=audio_duration_ms,
+    )
+    session.add(note)
+    session.flush()  # assign note.id before creating deliveries
+
+    devices = session.exec(
+        select(Device).where(
+            Device.owner_id == recipient_id,
             Device.status == DEVICE_STATUS_ACTIVE,
         )
     ).all()

@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from pydantic import EmailStr
-from sqlalchemy import DateTime, Interval
+from sqlalchemy import DateTime, Interval, LargeBinary
 from sqlmodel import Field, Relationship, SQLModel
 
 # Default retention: a note stays displayed at least this long before the device
@@ -188,13 +188,23 @@ class DeviceRegistrationInfo(SQLModel):
     name: str
 
 
+# Media type discriminator for a note's content
+NOTE_MEDIA_TEXT = "text"
+NOTE_MEDIA_AUDIO = "audio"
+
+
 # Shared properties
 class NoteBase(SQLModel):
+    # Body text. Required for text notes; for audio notes this holds a caption /
+    # fallback string so older gadget firmware (which only ever reads `.text`)
+    # still has something legible to display.
+    text: str = Field(default="", max_length=1000)
+    media_type: str = Field(default=NOTE_MEDIA_TEXT, max_length=10)
+
+
+# Properties to receive on text note creation
+class NoteCreate(SQLModel):
     text: str = Field(min_length=1, max_length=1000)
-
-
-# Properties to receive on note creation
-class NoteCreate(NoteBase):
     recipient_id: uuid.UUID
     min_retention: timedelta = DEFAULT_MIN_RETENTION
     # None means the note never auto-expires (infinite max retention)
@@ -222,6 +232,12 @@ class Note(NoteBase, table=True):
         default=None,
         sa_type=Interval,  # type: ignore
     )
+    # Audio note payload. NULL for text notes. Never exposed directly via
+    # NotePublic/DeviceNotePublic — always streamed through a dedicated
+    # /audio endpoint instead.
+    audio_data: bytes | None = Field(default=None, sa_type=LargeBinary)
+    audio_mime: str = Field(default="audio/wav", max_length=40)
+    audio_duration_ms: int | None = None
     deliveries: list["NoteDelivery"] = Relationship(
         back_populates="note", cascade_delete=True
     )
@@ -270,6 +286,7 @@ class NotePublic(NoteBase):
     max_retention_seconds: int | None = None
     delivered_count: int = 0
     received_count: int = 0
+    audio_duration_ms: int | None = None
 
 
 class NotesPublic(SQLModel):
@@ -291,12 +308,22 @@ class DeviceNotePublic(SQLModel):
     created_at: datetime
     queue_remaining: int
     server_time: datetime
+    # Additive/nullable fields — old gadget firmware ignores unknown keys and
+    # keeps working unmodified.
+    media_type: str = NOTE_MEDIA_TEXT
+    audio_url: str | None = None
+    audio_duration_ms: int | None = None
 
 
 # Device handshake / registration response
 class DeviceHandshakePublic(SQLModel):
     device: DevicePublic
     server_time: datetime
+
+
+# Ack returned to the gadget after it uploads a recorded voice note
+class DeviceAudioUploadAck(SQLModel):
+    note_id: uuid.UUID
 
 
 # A single user match for the recipient picker
