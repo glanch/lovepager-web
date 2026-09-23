@@ -368,6 +368,14 @@ export type NoteDetailPublic = {
      */
     received_count?: number;
     /**
+     * Media Type
+     */
+    media_type?: string;
+    /**
+     * Audio Duration Ms
+     */
+    audio_duration_ms?: number | null;
+    /**
      * Deliveries
      */
     deliveries?: Array<NoteDeliveryPublic>;
@@ -421,6 +429,14 @@ export type NotePublic = {
      * Received Count
      */
     received_count?: number;
+    /**
+     * Media Type
+     */
+    media_type?: string;
+    /**
+     * Audio Duration Ms
+     */
+    audio_duration_ms?: number | null;
 };
 
 /**

@@ -34,7 +34,9 @@ function NotesTableContent() {
         <div className="rounded-full bg-muted p-4 mb-4">
           <Send className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold">You haven't sent any notes yet</h3>
+        <h3 className="text-lg font-semibold">
+          You haven't sent any notes yet
+        </h3>
         <p className="text-muted-foreground">
           Send a note to page someone's device
         </p>

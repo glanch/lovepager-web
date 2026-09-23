@@ -1,12 +1,16 @@
+import io
 import uuid
+from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Form, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlmodel import col, func, select
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
+    DEFAULT_MIN_RETENTION,
     Device,
     Note,
     NoteCreate,
@@ -19,6 +23,8 @@ from app.models import (
 )
 
 router = APIRouter(prefix="/notes", tags=["notes"])
+
+AUDIO_CHUNK_SIZE = 4096
 
 
 def _retention_seconds(delta: Any) -> int | None:
@@ -44,6 +50,7 @@ def _build_note_public(session: SessionDep, note: Note) -> NotePublic:
     return NotePublic(
         id=note.id,
         text=note.text,
+        media_type=note.media_type,
         sender_id=note.sender_id,
         recipient_id=note.recipient_id,
         recipient_name=recipient.full_name if recipient else None,
@@ -53,6 +60,7 @@ def _build_note_public(session: SessionDep, note: Note) -> NotePublic:
         max_retention_seconds=_retention_seconds(note.max_retention),
         delivered_count=delivered_count,
         received_count=received_count,
+        audio_duration_ms=note.audio_duration_ms,
     )
 
 
@@ -150,3 +158,61 @@ def create_note(
         session=session, sender_id=current_user.id, note_in=note_in
     )
     return _build_note_public(session, note)
+
+
+@router.post("/audio", response_model=NotePublic)
+async def create_audio_note(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    recipient_id: uuid.UUID = Form(),
+    audio: UploadFile,
+    duration_ms: int = Form(),
+    caption: str | None = Form(default=None),
+    min_retention: timedelta = Form(default=DEFAULT_MIN_RETENTION),
+    max_retention: timedelta | None = Form(default=None),
+) -> Any:
+    """
+    Send a voice note (recorded in the browser) to another user. The upload
+    must be raw 16 kHz mono PCM/WAV — the gadget has no Opus/MP3 decoder.
+    """
+    recipient = session.get(User, recipient_id)
+    if not recipient or not recipient.is_active:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+    audio_data = await audio.read()
+    if not audio_data:
+        raise HTTPException(status_code=400, detail="Empty audio payload")
+    note = crud.create_audio_note(
+        session=session,
+        sender_id=current_user.id,
+        recipient_id=recipient_id,
+        audio_data=audio_data,
+        audio_mime=audio.content_type or "audio/wav",
+        audio_duration_ms=duration_ms,
+        caption=caption,
+        min_retention=min_retention,
+        max_retention=max_retention,
+    )
+    return _build_note_public(session, note)
+
+
+@router.get("/{id}/audio")
+def get_note_audio(
+    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
+) -> StreamingResponse:
+    """
+    Stream a note's audio payload for browser playback. Only the sender or
+    recipient may fetch it.
+    """
+    note = session.get(Note, id)
+    if not note or note.audio_data is None:
+        raise HTTPException(status_code=404, detail="Note not found")
+    if current_user.id not in (note.sender_id, note.recipient_id):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    def _iter_chunks() -> Any:
+        buf = io.BytesIO(note.audio_data)
+        while chunk := buf.read(AUDIO_CHUNK_SIZE):
+            yield chunk
+
+    return StreamingResponse(_iter_chunks(), media_type=note.audio_mime)

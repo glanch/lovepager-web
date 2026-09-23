@@ -4,6 +4,12 @@ import { Heart, RotateCcw, Send, Settings } from "lucide-react"
 import { useState } from "react"
 
 import { type NoteCreate, NotesService, UsersService } from "@/client"
+import { AudioPlayer } from "@/components/Notes/AudioPlayer"
+import {
+  AudioRecorder,
+  type AudioRecorderValue,
+} from "@/components/Notes/AudioRecorder"
+import { sendAudioNote } from "@/components/Notes/ComposeNote"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -69,44 +76,83 @@ interface QuickSendProps {
 }
 
 function QuickSend({ partnerId, partnerName, text, setText }: QuickSendProps) {
+  const [mode, setMode] = useState<"text" | "voice">("text")
+  const [audioValue, setAudioValue] = useState<AudioRecorderValue | null>(null)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
-  const mutation = useMutation({
+  const onSuccess = () => {
+    showSuccessToast(`Note sent to ${partnerName}`)
+    setText("")
+    setAudioValue(null)
+  }
+  const onSettled = () => {
+    queryClient.invalidateQueries({ queryKey: ["notes"] })
+  }
+
+  const textMutation = useMutation({
     mutationFn: (body: NoteCreate) => NotesService.createNote({ body }),
-    onSuccess: () => {
-      showSuccessToast(`Note sent to ${partnerName}`)
-      setText("")
-    },
+    onSuccess,
     onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] })
-    },
+    onSettled,
   })
+
+  const audioMutation = useMutation({
+    mutationFn: sendAudioNote,
+    onSuccess,
+    onError: handleError.bind(showErrorToast),
+    onSettled,
+  })
+
+  const isPending = textMutation.isPending || audioMutation.isPending
 
   return (
     <div className="flex flex-col gap-3">
-      <Textarea
-        placeholder={`Write a note to ${partnerName}…`}
-        value={text}
-        maxLength={1000}
-        rows={3}
-        onChange={(e) => setText(e.target.value)}
-        className="resize-none"
-      />
+      <Tabs value={mode} onValueChange={(v) => setMode(v as "text" | "voice")}>
+        <TabsList className="w-full">
+          <TabsTrigger value="text">Text</TabsTrigger>
+          <TabsTrigger value="voice">Voice</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {mode === "text" ? (
+        <Textarea
+          placeholder={`Write a note to ${partnerName}…`}
+          value={text}
+          maxLength={1000}
+          rows={3}
+          onChange={(e) => setText(e.target.value)}
+          className="resize-none"
+        />
+      ) : (
+        <AudioRecorder onChange={setAudioValue} />
+      )}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{text.length}/1000</span>
+        {mode === "text" ? (
+          <span className="text-xs text-muted-foreground">
+            {text.length}/1000
+          </span>
+        ) : (
+          <span />
+        )}
         <LoadingButton
           type="button"
-          loading={mutation.isPending}
-          disabled={!text.trim()}
+          loading={isPending}
+          disabled={mode === "text" ? !text.trim() : !audioValue}
           onClick={() =>
-            mutation.mutate({
-              recipient_id: partnerId,
-              text: text.trim(),
-              min_retention: "PT3600S",
-              max_retention: null,
-            })
+            mode === "text"
+              ? textMutation.mutate({
+                  recipient_id: partnerId,
+                  text: text.trim(),
+                  min_retention: "PT3600S",
+                  max_retention: null,
+                })
+              : audioValue &&
+                audioMutation.mutate({
+                  recipientId: partnerId,
+                  audio: audioValue,
+                  minRetention: "PT3600S",
+                  maxRetention: null,
+                })
           }
         >
           <Send className="mr-2 h-4 w-4" />
@@ -123,6 +169,8 @@ interface RecentNote {
   created_at?: string | null
   received_count?: number
   delivered_count?: number
+  media_type?: string
+  audio_duration_ms?: number | null
 }
 
 function RecentNoteItem({
@@ -135,31 +183,41 @@ function RecentNoteItem({
   const allReceived =
     (note.delivered_count ?? 0) > 0 &&
     note.received_count === note.delivered_count
+  const isAudio = note.media_type === "audio"
 
   return (
     <div className="flex items-start justify-between gap-3 py-3 border-b last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="text-sm truncate">{note.text}</p>
+        {isAudio ? (
+          <AudioPlayer noteId={note.id} durationMs={note.audio_duration_ms} />
+        ) : (
+          <p className="text-sm truncate">{note.text}</p>
+        )}
         <div className="flex items-center gap-2 mt-1">
           <span className="text-xs text-muted-foreground">
             {formatRelativeTime(note.created_at)}
           </span>
-          <Badge variant={allReceived ? "default" : "secondary"} className="text-xs h-4 px-1">
+          <Badge
+            variant={allReceived ? "default" : "secondary"}
+            className="text-xs h-4 px-1"
+          >
             {note.received_count ?? 0}/{note.delivered_count ?? 0}
           </Badge>
         </div>
       </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 shrink-0 text-muted-foreground"
-        title="Resend"
-        onClick={() => onRetrigger(note.text)}
-      >
-        <RotateCcw className="h-3.5 w-3.5" />
-        <span className="sr-only">Resend</span>
-      </Button>
+      {!isAudio && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0 text-muted-foreground"
+          title="Resend"
+          onClick={() => onRetrigger(note.text)}
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          <span className="sr-only">Resend</span>
+        </Button>
+      )}
     </div>
   )
 }
@@ -238,7 +296,9 @@ function Dashboard() {
           Hi, {currentUser?.full_name || currentUser?.email}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {currentUser?.partner_id ? "Ready to send a note?" : "Welcome to LovePager"}
+          {currentUser?.partner_id
+            ? "Ready to send a note?"
+            : "Welcome to LovePager"}
         </p>
       </div>
 

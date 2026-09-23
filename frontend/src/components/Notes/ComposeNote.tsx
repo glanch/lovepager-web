@@ -1,12 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Send } from "lucide-react"
 import { type ReactNode, useState } from "react"
-
 import {
   type NoteCreate,
+  type NotePublic,
   NotesService,
   type UserSearchResult,
 } from "@/client"
+import { client } from "@/client/client.gen"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,10 +28,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
+import { AudioRecorder, type AudioRecorderValue } from "./AudioRecorder"
 import { RecipientPicker } from "./RecipientPicker"
+
+export async function sendAudioNote(params: {
+  recipientId: string
+  audio: AudioRecorderValue
+  minRetention: string
+  maxRetention: string | null
+}): Promise<NotePublic> {
+  const form = new FormData()
+  form.append("recipient_id", params.recipientId)
+  form.append("audio", params.audio.blob, "note.wav")
+  form.append("duration_ms", String(Math.round(params.audio.durationMs)))
+  form.append("min_retention", params.minRetention)
+  if (params.maxRetention) form.append("max_retention", params.maxRetention)
+  const response = await client.post<{ 200: NotePublic }, unknown, true>({
+    url: "/api/v1/notes/audio",
+    body: form,
+    security: [{ scheme: "bearer", type: "http" }],
+  })
+  return response.data
+}
 
 // Retention presets, in seconds. "0" for max means "Never" (infinite).
 const MIN_OPTIONS = [
@@ -65,10 +88,12 @@ const ComposeNote = ({
   triggerLabel,
 }: ComposeNoteProps) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [mode, setMode] = useState<"text" | "voice">("text")
   const [recipient, setRecipient] = useState<UserSearchResult | null>(
     fixedRecipient ?? null,
   )
   const [text, setText] = useState(defaultText)
+  const [audioValue, setAudioValue] = useState<AudioRecorderValue | null>(null)
   const [minRetention, setMinRetention] = useState("3600")
   const [maxRetention, setMaxRetention] = useState("0")
   const [error, setError] = useState<string | null>(null)
@@ -77,25 +102,39 @@ const ComposeNote = ({
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const reset = () => {
+    setMode("text")
     setRecipient(fixedRecipient ?? null)
     setText(defaultText)
+    setAudioValue(null)
     setMinRetention("3600")
     setMaxRetention("0")
     setError(null)
   }
 
-  const mutation = useMutation({
+  const onSuccess = () => {
+    showSuccessToast("Note sent")
+    reset()
+    setIsOpen(false)
+  }
+  const onSettled = () => {
+    queryClient.invalidateQueries({ queryKey: ["notes"] })
+  }
+
+  const textMutation = useMutation({
     mutationFn: (body: NoteCreate) => NotesService.createNote({ body }),
-    onSuccess: () => {
-      showSuccessToast("Note sent")
-      reset()
-      setIsOpen(false)
-    },
+    onSuccess,
     onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] })
-    },
+    onSettled,
   })
+
+  const audioMutation = useMutation({
+    mutationFn: sendAudioNote,
+    onSuccess,
+    onError: handleError.bind(showErrorToast),
+    onSettled,
+  })
+
+  const isPending = textMutation.isPending || audioMutation.isPending
 
   const onSubmit = () => {
     setError(null)
@@ -103,17 +142,31 @@ const ComposeNote = ({
       setError("Please pick a recipient")
       return
     }
-    if (!text.trim()) {
-      setError("Please enter a message")
-      return
-    }
     const maxSeconds = Number(maxRetention)
-    mutation.mutate({
-      recipient_id: recipient.id,
-      text: text.trim(),
-      min_retention: secondsToIso(Number(minRetention)),
-      max_retention: maxSeconds === 0 ? null : secondsToIso(maxSeconds),
-    })
+    const maxRetentionIso = maxSeconds === 0 ? null : secondsToIso(maxSeconds)
+    if (mode === "text") {
+      if (!text.trim()) {
+        setError("Please enter a message")
+        return
+      }
+      textMutation.mutate({
+        recipient_id: recipient.id,
+        text: text.trim(),
+        min_retention: secondsToIso(Number(minRetention)),
+        max_retention: maxRetentionIso,
+      })
+    } else {
+      if (!audioValue) {
+        setError("Please record a voice note")
+        return
+      }
+      audioMutation.mutate({
+        recipientId: recipient.id,
+        audio: audioValue,
+        minRetention: secondsToIso(Number(minRetention)),
+        maxRetention: maxRetentionIso,
+      })
+    }
   }
 
   const handleOpenChange = (open: boolean) => {
@@ -147,18 +200,36 @@ const ComposeNote = ({
               <RecipientPicker value={recipient} onChange={setRecipient} />
             </div>
           )}
-          <div className="grid gap-2">
-            <Label htmlFor="note-text">
-              Message <span className="text-destructive">*</span>
-            </Label>
-            <Textarea
-              id="note-text"
-              placeholder="What's the page?"
-              value={text}
-              maxLength={1000}
-              onChange={(e) => setText(e.target.value)}
-            />
-          </div>
+          <Tabs
+            value={mode}
+            onValueChange={(v) => setMode(v as "text" | "voice")}
+          >
+            <TabsList className="w-full">
+              <TabsTrigger value="text">Text</TabsTrigger>
+              <TabsTrigger value="voice">Voice</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {mode === "text" ? (
+            <div className="grid gap-2">
+              <Label htmlFor="note-text">
+                Message <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="note-text"
+                placeholder="What's the page?"
+                value={text}
+                maxLength={1000}
+                onChange={(e) => setText(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              <Label>
+                Voice note <span className="text-destructive">*</span>
+              </Label>
+              <AudioRecorder onChange={setAudioValue} />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label>Min retention</Label>
@@ -195,15 +266,11 @@ const ComposeNote = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" disabled={mutation.isPending}>
+            <Button variant="outline" disabled={isPending}>
               Cancel
             </Button>
           </DialogClose>
-          <LoadingButton
-            type="button"
-            loading={mutation.isPending}
-            onClick={onSubmit}
-          >
+          <LoadingButton type="button" loading={isPending} onClick={onSubmit}>
             Send
           </LoadingButton>
         </DialogFooter>

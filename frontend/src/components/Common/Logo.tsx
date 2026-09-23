@@ -9,7 +9,11 @@ interface LogoProps {
   asLink?: boolean
 }
 
-export function Logo({ variant = "full", className, asLink = true }: LogoProps) {
+export function Logo({
+  variant = "full",
+  className,
+  asLink = true,
+}: LogoProps) {
   const icon = (
     <Heart className={cn("h-5 w-5 text-pink-500 fill-pink-500", className)} />
   )

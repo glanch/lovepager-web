@@ -52,8 +52,7 @@ const AddDevice = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) =>
-      DevicesService.createDevice({ body: data }),
+    mutationFn: (data: FormData) => DevicesService.createDevice({ body: data }),
     onSuccess: (response) => {
       setRegistration(response.data)
     },

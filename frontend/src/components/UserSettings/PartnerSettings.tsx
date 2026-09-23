@@ -1,15 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Heart, X } from "lucide-react"
-
+import { useState } from "react"
+import type { UserSearchResult } from "@/client"
 import { UsersService } from "@/client"
+import { RecipientPicker } from "@/components/Notes/RecipientPicker"
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { RecipientPicker } from "@/components/Notes/RecipientPicker"
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
-import { useState } from "react"
-import type { UserSearchResult } from "@/client"
 
 const PartnerSettings = () => {
   const queryClient = useQueryClient()
@@ -21,7 +20,11 @@ const PartnerSettings = () => {
   const { data: partner } = useQuery({
     queryKey: ["partner", currentUser?.partner_id],
     queryFn: async () =>
-      (await UsersService.readUserById({ path: { user_id: currentUser!.partner_id! } })).data,
+      (
+        await UsersService.readUserById({
+          path: { user_id: currentUser!.partner_id! },
+        })
+      ).data,
     enabled: !!currentUser?.partner_id,
   })
 
@@ -29,7 +32,9 @@ const PartnerSettings = () => {
     mutationFn: (partner_id: string | null) =>
       UsersService.updateUserMe({ body: { partner_id } }),
     onSuccess: (_data, partner_id) => {
-      showSuccessToast(partner_id !== null ? "Partner updated" : "Partner removed")
+      showSuccessToast(
+        partner_id !== null ? "Partner updated" : "Partner removed",
+      )
       setPicking(false)
       setSelected(null)
     },

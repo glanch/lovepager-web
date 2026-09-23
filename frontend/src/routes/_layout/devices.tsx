@@ -34,7 +34,9 @@ function DevicesTableContent() {
         <div className="rounded-full bg-muted p-4 mb-4">
           <Radio className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold">You don't have any devices yet</h3>
+        <h3 className="text-lg font-semibold">
+          You don't have any devices yet
+        </h3>
         <p className="text-muted-foreground">
           Add a device to start receiving notes
         </p>

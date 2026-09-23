@@ -48,7 +48,7 @@ export function DeliveryStatus({ noteId }: DeliveryStatusProps) {
           {note && (
             <p className="rounded-md bg-muted p-3 text-sm">{note.text}</p>
           )}
-          {note && note.deliveries && note.deliveries.length === 0 && (
+          {note?.deliveries && note.deliveries.length === 0 && (
             <p className="text-sm text-muted-foreground">
               The recipient has no active devices yet.
             </p>

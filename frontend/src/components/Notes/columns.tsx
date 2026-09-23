@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import type { NotePublic } from "@/client"
 import { Badge } from "@/components/ui/badge"
+import { AudioPlayer } from "./AudioPlayer"
 import { DeliveryStatus } from "./DeliveryStatus"
 
 function formatDate(value?: string | null): string {
@@ -22,11 +23,17 @@ export const columns: ColumnDef<NotePublic>[] = [
   {
     accessorKey: "text",
     header: "Message",
-    cell: ({ row }) => (
-      <span className="max-w-xs truncate block text-muted-foreground">
-        {row.original.text}
-      </span>
-    ),
+    cell: ({ row }) =>
+      row.original.media_type === "audio" ? (
+        <AudioPlayer
+          noteId={row.original.id}
+          durationMs={row.original.audio_duration_ms}
+        />
+      ) : (
+        <span className="max-w-xs truncate block text-muted-foreground">
+          {row.original.text}
+        </span>
+      ),
   },
   {
     id: "delivery",
