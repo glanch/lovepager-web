@@ -35,6 +35,46 @@ export type Body_login_login_access_token = {
 };
 
 /**
+ * Body_notes-create_audio_note
+ */
+export type Body_notes_create_audio_note = {
+    /**
+     * Recipient Id
+     */
+    recipient_id: string;
+    /**
+     * Audio
+     */
+    audio: Blob | File;
+    /**
+     * Duration Ms
+     */
+    duration_ms: number;
+    /**
+     * Caption
+     */
+    caption?: string | null;
+    /**
+     * Min Retention
+     */
+    min_retention?: string;
+    /**
+     * Max Retention
+     */
+    max_retention?: string | null;
+};
+
+/**
+ * DeviceAudioUploadAck
+ */
+export type DeviceAudioUploadAck = {
+    /**
+     * Note Id
+     */
+    note_id: string;
+};
+
+/**
  * DeviceCreate
  */
 export type DeviceCreate = {
@@ -91,6 +131,18 @@ export type DeviceNotePublic = {
      * Server Time
      */
     server_time: string;
+    /**
+     * Media Type
+     */
+    media_type?: string;
+    /**
+     * Audio Url
+     */
+    audio_url?: string | null;
+    /**
+     * Audio Duration Ms
+     */
+    audio_duration_ms?: number | null;
 };
 
 /**
@@ -326,7 +378,11 @@ export type NoteDetailPublic = {
     /**
      * Text
      */
-    text: string;
+    text?: string;
+    /**
+     * Media Type
+     */
+    media_type?: string;
     /**
      * Id
      */
@@ -367,10 +423,6 @@ export type NoteDetailPublic = {
      * Received Count
      */
     received_count?: number;
-    /**
-     * Media Type
-     */
-    media_type?: string;
     /**
      * Audio Duration Ms
      */
@@ -388,7 +440,11 @@ export type NotePublic = {
     /**
      * Text
      */
-    text: string;
+    text?: string;
+    /**
+     * Media Type
+     */
+    media_type?: string;
     /**
      * Id
      */
@@ -429,10 +485,6 @@ export type NotePublic = {
      * Received Count
      */
     received_count?: number;
-    /**
-     * Media Type
-     */
-    media_type?: string;
     /**
      * Audio Duration Ms
      */
@@ -1487,6 +1539,72 @@ export type deviceMarkNoteReceivedResponses = {
 
 export type deviceMarkNoteReceivedResponse = deviceMarkNoteReceivedResponses[keyof deviceMarkNoteReceivedResponses];
 
+export type deviceGetNoteAudioData = {
+    body?: never;
+    path: {
+        /**
+         * Note Id
+         */
+        note_id: string;
+    };
+    query?: never;
+    url: '/api/v1/device/notes/{note_id}/audio';
+};
+
+export type deviceGetNoteAudioErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type deviceGetNoteAudioError = deviceGetNoteAudioErrors[keyof deviceGetNoteAudioErrors];
+
+export type deviceGetNoteAudioResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type deviceUploadAudioNoteData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Duration Ms
+         */
+        duration_ms: number;
+        /**
+         * Min Retention Seconds
+         */
+        min_retention_seconds?: number | null;
+        /**
+         * Max Retention Seconds
+         */
+        max_retention_seconds?: number | null;
+    };
+    url: '/api/v1/device/audio/upload';
+};
+
+export type deviceUploadAudioNoteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type deviceUploadAudioNoteError = deviceUploadAudioNoteErrors[keyof deviceUploadAudioNoteErrors];
+
+export type deviceUploadAudioNoteResponses = {
+    /**
+     * Successful Response
+     */
+    200: DeviceAudioUploadAck;
+};
+
+export type deviceUploadAudioNoteResponse = deviceUploadAudioNoteResponses[keyof deviceUploadAudioNoteResponses];
+
 export type notesReadNotesData = {
     body?: never;
     path?: never;
@@ -1609,6 +1727,59 @@ export type notesReadNoteResponses = {
 };
 
 export type notesReadNoteResponse = notesReadNoteResponses[keyof notesReadNoteResponses];
+
+export type notesCreateAudioNoteData = {
+    body: Body_notes_create_audio_note;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notes/audio';
+};
+
+export type notesCreateAudioNoteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type notesCreateAudioNoteError = notesCreateAudioNoteErrors[keyof notesCreateAudioNoteErrors];
+
+export type notesCreateAudioNoteResponses = {
+    /**
+     * Successful Response
+     */
+    200: NotePublic;
+};
+
+export type notesCreateAudioNoteResponse = notesCreateAudioNoteResponses[keyof notesCreateAudioNoteResponses];
+
+export type notesGetNoteAudioData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notes/{id}/audio';
+};
+
+export type notesGetNoteAudioErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type notesGetNoteAudioError = notesGetNoteAudioErrors[keyof notesGetNoteAudioErrors];
+
+export type notesGetNoteAudioResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type privateCreateUserData = {
     body: PrivateUserCreate;
