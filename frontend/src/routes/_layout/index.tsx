@@ -165,7 +165,7 @@ function QuickSend({ partnerId, partnerName, text, setText }: QuickSendProps) {
 
 interface RecentNote {
   id: string
-  text: string
+  text?: string
   created_at?: string | null
   received_count?: number
   delivered_count?: number
@@ -212,7 +212,7 @@ function RecentNoteItem({
           size="icon"
           className="h-8 w-8 shrink-0 text-muted-foreground"
           title="Resend"
-          onClick={() => onRetrigger(note.text)}
+          onClick={() => onRetrigger(note.text ?? "")}
         >
           <RotateCcw className="h-3.5 w-3.5" />
           <span className="sr-only">Resend</span>
